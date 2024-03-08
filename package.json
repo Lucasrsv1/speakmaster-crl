@@ -1,0 +1,9 @@
+{
+	"name": "@speakmaster/crl",
+	"version": "1.0.0",
+	"description": "Command Recognition Language",
+	"main": "index.js",
+	"scripts": {},
+	"author": "Lucas Rassilan Vilanova",
+	"license": "ISC"
+}
