@@ -1,9 +1,19 @@
 {
-	"name": "@speakmaster/crl",
+	"name": "speakmaster-crl",
 	"version": "1.0.0",
 	"description": "Command Recognition Language",
 	"main": "index.js",
 	"scripts": {},
 	"author": "Lucas Rassilan Vilanova",
-	"license": "ISC"
+	"license": "ISC",
+	"keywords": [
+		"automata",
+		"command",
+		"language",
+		"command-recognition",
+		"command-language",
+		"command-recognition-language",
+		"command-automata",
+		"voice-command"
+	]
 }

@@ -31,7 +31,7 @@ Dado o comando abaixo:
 O seguinte código é capaz de validar se uma dada entrada é ou não reconhecida por este comando:
 
 ```javascript
-const { Automata } = require("@speakmaster/crl");
+const { Automata } = require("speakmaster-crl");
 
 // Para definir um comando:
 // Passe a definição do comando usando a linguagem CRL como parâmetro na criação de uma instância da classe Automata
@@ -93,7 +93,7 @@ console.log(command.getAllPossibilities());
 ### Para apenas validar a sintaxe de um comando:
 
 ```javascript
-const { validateSyntax } = require("@speakmaster/crl");
+const { validateSyntax } = require("speakmaster-crl");
 
 const error = validateSyntax("play [the] song] {SONG NAME}");
 console.log(error.message, { line: error.line, column: error.column });
