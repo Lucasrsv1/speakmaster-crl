@@ -1,10 +1,106 @@
-# Command Recognition Language
+# Command Recognition Language (CRL)
 
-#### Linguagem para definição e estruturação de autômatos de comandos de voz
+Implementação da linguagem de reconhecimento de comandos, usada no SpeakMaster para a definição e estruturação de autômatos de comandos de voz.
+
+Nessa linguagem, temos as seguintes funcionalidades:
+
+- Colchetes são usados para denotar termos opcionais que podem ou não ser falados:
+
+	![Termo opcional](./command-optional.png "Termo opcional")
+
+- Parêntesis são usados para denotar uma lista de possíveis termos que podem ser falados:
+
+	![Lista de possíveis termos](./command-list.png "Lista de possíveis termos")
+
+- Chaves são usadas para denotar variáveis que reconhecem qualquer sequência de termos da entrada:
+
+	![Variável](./command-variable.png "Variável")
+
+- Além disso, é possível restringir o reconhecimento de variáveis adicionando uma lista de opções de termos à sua definição:
+
+	![Variável restringida a certos termos](./command-restricted-variable.png "Variável restringida a certos termos")
+
+Ao ser realizado o reconhecimento de uma dada entrada, os valores reconhecidos e associados as variáveis ficam disponíveis para acesso e utilização conforme demonstrado abaixo.
+
+## Como Usar
+
+Dado o comando abaixo:
+
+![Comando para tocar uma música](./command-example-1.png "Comando para tocar uma música")
+
+O seguinte código é capaz de validar se uma dada entrada é ou não reconhecida por este comando:
+
+```javascript
+const { Automata } = require("@speakmaster/crl");
+
+// Para definir um comando:
+// Passe a definição do comando usando a linguagem CRL como parâmetro na criação de uma instância da classe Automata
+const command = new Automata("play [[the] song] {SONG NAME} from [[the] {ALBUM TYPE (album, disc, record)}] {ALBUM}");
+
+// Para verificar se uma entrada é reconhecida por um comando:
+console.log(command.match("play where do we go from brave enough"));
+/*Match {
+	match: true,
+	variables: {
+		'SONG NAME': 'where do we go',
+		ALBUM: 'brave enough',
+		'ALBUM TYPE': ''
+	},
+	isBest: true
+}*/
+
+console.log(command.match("play the song where do we go from the record brave enough"));
+/*Match {
+	match: true,
+	variables: {
+		'SONG NAME': 'where do we go',
+		ALBUM: 'brave enough',
+		'ALBUM TYPE': 'record'
+	},
+	isBest: true
+}*/
+
+console.log(command.match("play where do we go"));
+/*Match { match: false, variables: {}, isBest: false }*/
+
+// Para obter todas as possibilidades de comandos:
+console.log(command.getAllPossibilities());
+/*[
+	'play {SONG NAME} from {ALBUM}',
+	'play song {SONG NAME} from {ALBUM}',
+	'play {SONG NAME} from album {ALBUM}',
+	'play {SONG NAME} from disc {ALBUM}',
+	'play {SONG NAME} from record {ALBUM}',
+	'play the song {SONG NAME} from {ALBUM}',
+	'play song {SONG NAME} from album {ALBUM}',
+	'play song {SONG NAME} from disc {ALBUM}',
+	'play song {SONG NAME} from record {ALBUM}',
+	'play {SONG NAME} from the album {ALBUM}',
+	'play {SONG NAME} from the disc {ALBUM}',
+	'play {SONG NAME} from the record {ALBUM}',
+	'play the song {SONG NAME} from album {ALBUM}',
+	'play the song {SONG NAME} from disc {ALBUM}',
+	'play the song {SONG NAME} from record {ALBUM}',
+	'play song {SONG NAME} from the album {ALBUM}',
+	'play song {SONG NAME} from the disc {ALBUM}',
+	'play song {SONG NAME} from the record {ALBUM}',
+	'play the song {SONG NAME} from the album {ALBUM}',
+	'play the song {SONG NAME} from the disc {ALBUM}',
+	'play the song {SONG NAME} from the record {ALBUM}'
+]*/
+```
+
+### Para apenas validar a sintaxe de um comando:
+
+```javascript
+const { validateSyntax } = require("@speakmaster/crl");
+
+const error = validateSyntax("play [the] song] {SONG NAME}");
+console.log(error.message, { line: error.line, column: error.column });
+// Unexpected lexeme "]" at 16 { line: 1, column: 17 }
+```
 
 ## Definição da gramática oficial no formato de Backus Naur Estendida (EBNF):
-
-### Command Recognition Language (CRL)
 
 ```EBNF
 <sentence> ::= <sentence> <sentence>
@@ -40,6 +136,8 @@
 ### **Exemplo de Árvore de derivação**
 
 #### **play [[the [really awesome]] song] {SONG NAME} from [[the] {ALBUM TYPE (album, [blu-ray] disc, great vinyl [record])} called] {ALBUM}**
+
+![Comando para tocar uma música](./command-example-2.png "Comando para tocar uma música")
 
 ```
 <sentence>

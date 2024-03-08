@@ -32,10 +32,22 @@ class LexicalAnalysis {
 	_line;
 
 	/**
+	 * Linha atual do cursor na leitura da entrada
+	 * @type {number}
+	 */
+	_nextLine;
+
+	/**
 	 * Posição atual do cursor para onde começa o token atual na linha atual
 	 * @type {number}
 	 */
 	_column;
+
+	/**
+	 * Posição atual do cursor na leitura da entrada
+	 * @type {number}
+	 */
+	_nextColumn;
 
 	/**
 	 * Tamanho do último token processado para atualização da posição
@@ -53,6 +65,8 @@ class LexicalAnalysis {
 		this._position = 1;
 		this._line = 1;
 		this._column = 1;
+		this._nextLine = 1;
+		this._nextColumn = 1;
 		this._lastTokenSize = 0;
 	}
 
@@ -86,6 +100,8 @@ class LexicalAnalysis {
 	 */
 	nextToken () {
 		this._position += this._lastTokenSize;
+		this._line = this._nextLine;
+		this._column = this._nextColumn;
 		this._lastTokenSize = 0;
 
 		let lex = new Lexeme("", TokenType.END);
@@ -102,21 +118,23 @@ class LexicalAnalysis {
 						state = 4;
 					} else if ([' ', "\n", '\t', '\r'].includes(c)) {
 						if (c === "\n") {
-							this._line++;
-							this._column = 1;
+							this._nextLine++;
+							this._nextColumn = 1;
 						} else {
-							this._column++;
+							this._nextColumn++;
 						}
 
 						this._position += this._lastTokenSize;
+						this._line = this._nextLine;
+						this._column = this._nextColumn;
 						this._lastTokenSize = 0;
 						state = 1;
 					} else if ([',', '(', ')', '[', ']', '{', '}'].includes(c)) {
-						this._column++;
+						this._nextColumn++;
 						lex.token += c;
 						state = 2;
 					} else {
-						this._column++;
+						this._nextColumn++;
 						lex.token += c;
 						lex.type = TokenType.STRING;
 						state = 3;
@@ -125,10 +143,10 @@ class LexicalAnalysis {
 				case 3:
 					if (c === undefined || c === " " || c === "\n") {
 						if (c === "\n") {
-							this._line++;
-							this._column = 1;
+							this._nextLine++;
+							this._nextColumn = 1;
 						} else if (c !== undefined) {
-							this._column++;
+							this._nextColumn++;
 						}
 
 						state = 4;
@@ -137,7 +155,7 @@ class LexicalAnalysis {
 						this._lastTokenSize--;
 						state = 4;
 					} else {
-						this._column++;
+						this._nextColumn++;
 						lex.token += c;
 					}
 					break;
