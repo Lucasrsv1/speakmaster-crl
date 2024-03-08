@@ -96,8 +96,9 @@ console.log(command.getAllPossibilities());
 const { validateSyntax } = require("speakmaster-crl");
 
 const error = validateSyntax("play [the] song] {SONG NAME}");
+
 console.log(error.message, { line: error.line, column: error.column });
-// Unexpected lexeme "]" at 16 { line: 1, column: 17 }
+// Unexpected lexeme "]" at 16 { line: 1, column: 16 }
 ```
 
 ## Definição da gramática oficial no formato de Backus Naur Estendida (EBNF):

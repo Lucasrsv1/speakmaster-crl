@@ -5,6 +5,9 @@
 	"main": "index.js",
 	"scripts": {},
 	"author": "Lucas Rassilan Vilanova",
+	"repository": {
+		"url": "https://github.com/Lucasrsv1/speakmaster-crl"
+	},
 	"license": "ISC",
 	"keywords": [
 		"automata",
