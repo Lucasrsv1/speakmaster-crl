@@ -1,5 +1,3 @@
-import { Automata } from "./automata/automata";
-
 import { LexicalAnalysis } from "./lexical/lexical-analysis";
 
 import { CRLSyntaxError } from "./syntactic/syntax-error";
@@ -7,13 +5,15 @@ import { SyntacticAnalysis } from "./syntactic/syntactic-analysis";
 
 import interpreter from "./interpreter";
 
+export { Automata } from "./automata/automata";
+
 /**
  * Configura o modo de depuração do interpretador da linguagem CRL
  * @param debugging Ativa o modo de depuração do interpretador na análise dos estados do automato
  * @param lexicalDebugging Ativa o modo de depuração do analisador léxico
  * @param syntacticDebugging Ativa o modo de depuração do analisador sintático
  */
-function setInterpreterDebug (debugging: boolean, lexicalDebugging: boolean = debugging, syntacticDebugging: boolean = debugging): void {
+export function setInterpreterDebug (debugging: boolean, lexicalDebugging: boolean = debugging, syntacticDebugging: boolean = debugging): void {
 	interpreter.debugging = debugging;
 	interpreter.lexicalDebugging = lexicalDebugging;
 	interpreter.syntacticDebugging = syntacticDebugging;
@@ -23,7 +23,7 @@ function setInterpreterDebug (debugging: boolean, lexicalDebugging: boolean = de
  * Valida o código CRL de definição e estruturação de um comando, retornando um erro sintático caso o código seja inválido.
  * @param cmd Código usando a linguagem CRL de definição e estruturação de um comando
  */
-function validateSyntax (cmd: string): CRLSyntaxError | null {
+export function validateSyntax (cmd: string): CRLSyntaxError | null {
 	const lexicalAnalysis = new LexicalAnalysis(cmd);
 	const syntacticAnalysis = new SyntacticAnalysis(lexicalAnalysis);
 
@@ -38,5 +38,3 @@ function validateSyntax (cmd: string): CRLSyntaxError | null {
 		}
 	}
 }
-
-export default { Automata, setInterpreterDebug, validateSyntax };
