@@ -1,25 +1,21 @@
-const TokenType = require("./token-type");
+import { TokenType } from "./token-type";
 
 /**
  * Menor unidade reconhecida pela linguagem
  */
-class Lexeme {
+export class Lexeme {
 	/**
 	 * Conteúdo do lexema
-	 * @type {string}
 	 */
-	token;
+	public token: string;
 
 	/**
 	 * Tipo de token do lexema
-	 * @type {TokenType}
 	 */
-	type;
+	public type: TokenType;
 
-	constructor (token, type) {
+	constructor (token: string, type: TokenType) {
 		this.token = token;
 		this.type = type;
 	}
 }
-
-module.exports = Lexeme;

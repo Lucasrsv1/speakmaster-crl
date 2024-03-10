@@ -1,10 +1,12 @@
-const Automata = require("./automata");
-const AutomataState = require("./automata-state");
-const { AutomataStateType } = require("./automata-state");
+/* eslint-disable dot-notation */
 
-const interpreter = require("../interpreter");
+import { Automata } from "../src/automata/automata";
+import { AutomataState, AutomataStateType } from "../src/automata/automata-state";
 
-function setDebug (on) {
+import interpreter from "../src/interpreter";
+
+
+function setDebug (on: boolean): void {
 	interpreter.debugging = on == true;
 	interpreter.lexicalDebugging = on == true;
 	interpreter.syntacticDebugging = on == true;
@@ -244,24 +246,24 @@ if (realAutomataPossibilities.length !== testPossibilities.length) {
 // Validação dos estados
 
 let index = 0;
-let isRealAutomataEqualSoFar = states.length === realAutomata._states.length;
+let isRealAutomataEqualSoFar = states.length === realAutomata["_states"].length;
 
 for (; index < states.length && isRealAutomataEqualSoFar; index++)
-	isRealAutomataEqualSoFar &&= states[index].equals(realAutomata._states[index]);
+	isRealAutomataEqualSoFar &&= states[index].equals(realAutomata["_states"][index]);
 
 if (isRealAutomataEqualSoFar)
 	console.log("\nThe real implementation os the Automata class resulted in the expected states");
 else if (index > 0)
 	console.error("\nThe real implementation os the Automata class resulted in states different from what was expected at index", index - 1);
 else
-	console.error(`\nThe real implementation os the Automata class resulted in ${realAutomata._states.length} states, but ${states.length} were expected`);
+	console.error(`\nThe real implementation os the Automata class resulted in ${realAutomata["_states"].length} states, but ${states.length} were expected`);
 
 // Validação da tabela de transições
 
-isRealAutomataEqualSoFar = transitionTable.size === realAutomata._transitionTable.size;
+isRealAutomataEqualSoFar = transitionTable.size === realAutomata["_transitionTable"].size;
 if (isRealAutomataEqualSoFar) {
 	for (const key of transitionTable.keys()) {
-		const realStates = Array.from(realAutomata._statesMap.values()).filter(s => s.equals(statesMap.get(key)));
+		const realStates = Array.from(realAutomata["_statesMap"].values()).filter(s => s.equals(statesMap.get(key)));
 		if (!realStates.length) {
 			isRealAutomataEqualSoFar = false;
 			console.error(`\nThe real implementation os the Automata class has no transitions for state "${statesMap.get(key).value}"`);
@@ -270,7 +272,7 @@ if (isRealAutomataEqualSoFar) {
 
 		let foundValidState = false;
 		for (const realState of realStates) {
-			const realTransitions = realAutomata._transitionTable.get(realState.id);
+			const realTransitions = realAutomata["_transitionTable"].get(realState.id) || [];
 			if (!foundValidState && realTransitions.length === transitionTable.get(key).length) {
 				foundValidState = true;
 				for (const possibleState of transitionTable.get(key))
@@ -286,10 +288,10 @@ if (isRealAutomataEqualSoFar) {
 
 	}
 } else {
-	console.error(`\nThe real implementation os the Automata class resulted in ${realAutomata._transitionTable.size} transitions, but ${transitionTable.size} were expected`);
+	console.error(`\nThe real implementation os the Automata class resulted in ${realAutomata["_transitionTable"].size} transitions, but ${transitionTable.size} were expected`);
 }
 
 if (isRealAutomataEqualSoFar)
 	console.log("The real implementation os the Automata class resulted in the expected transition table");
 else
-	console.error(`The real implementation os the Automata class resulted in a different transition table from what was expected`);
+	console.error("The real implementation os the Automata class resulted in a different transition table from what was expected");

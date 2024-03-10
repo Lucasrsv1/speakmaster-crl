@@ -1,56 +1,49 @@
-// ? Um exemplo de montagem da tabela de transições do autômato se encontra no arquivo example-automata.js
+// ? Um exemplo de montagem da tabela de transições do autômato se encontra no arquivo tests/manual-automata-validation.ts
 
-const AutomataState = require("./automata-state");
-const { AutomataStateType } = require("./automata-state");
-const Match = require("./match");
+import { AutomataState, AutomataStateType } from "./automata-state";
 
-const interpreter = require("../interpreter");
+import interpreter from "../interpreter";
+import { Match } from "./match";
 
 /**
  * Representa o autômato executável de um comando
  */
-class Automata {
+export class Automata {
 	/**
 	 * Lista de estados do autômato
-	 * @type {AutomataState[]}
 	 */
-	_states = [];
+	private _states: AutomataState[] = [];
 
 	/**
 	 * Tabela de transição do autômato que associa um estado aos possíveis estados que podem vir após ele
-	 * @type {Map<symbol, AutomataState[]>}
 	 */
-	_transitionTable = new Map();
+	private _transitionTable: Map<symbol, AutomataState[]> = new Map();
 
 	/**
 	 * Associa a chave de um estado ao próprio estado
-	 * @type {Map<symbol, AutomataState>}
 	 */
-	_statesMap = new Map();
+	private _statesMap: Map<symbol, AutomataState> = new Map();
 
 	/**
 	 * Inicializa cada variável que compõe o autômato
-	 * @type {Record<string, string>}
 	 */
-	_defaultVariables = {};
+	private _defaultVariables: Record<string, string> = {};
 
 	/**
 	 * Associa a chave de um estado ao próprio estado
-	 * @type {Map<symbol, symbol[]>}
 	 */
-	_statesToVariablesMap = new Map();
+	private _statesToVariablesMap: Map<symbol, symbol[]> = new Map();
 
 	/**
 	 * Flag de depuração do autômato
-	 * @type {boolean}
 	 */
-	static debugging = false;
+	public static debugging: boolean = false;
 
 	/**
 	 * Define um autômato de um comando
-	 * @param {string} cmd String de definição e estruturação de um comando
+	 * @param cmd String de definição e estruturação de um comando
 	 */
-	constructor (cmd) {
+	constructor (cmd: string) {
 		// Obtém lista de estados a partir da string de definição do comando
 		this._states = interpreter.getAutomataStates(cmd);
 		this._initializeVariables();
@@ -62,7 +55,7 @@ class Automata {
 		if (Automata.debugging) {
 			console.log("[Automata Log] Generated transition table:");
 			for (const key of this._transitionTable.keys())
-				console.log(`[Automata Log] ${this._statesMap.get(key).value} -> ${this._transitionTable.get(key).map(s => s.value).join(" | ")}`);
+				console.log(`[Automata Log] ${this._statesMap.get(key)?.value} -> ${this._transitionTable.get(key)?.map(s => s.value).join(" | ")}`);
 		}
 	}
 
@@ -70,11 +63,11 @@ class Automata {
 	 * Identifica todas as variáveis possíveis para o autômato e as inicializa com uma string vazia,
 	 * além de montar o mapa que associa uma ID a um estado
 	 */
-	_initializeVariables () {
-		let s;
+	private _initializeVariables (): void {
 		const queue = this._states.slice();
+		let s = queue.shift();
 
-		while (s = queue.shift()) {
+		while (s) {
 			this._statesMap.set(s.id, s);
 			if (s.innerStates.length)
 				queue.push(...s.innerStates);
@@ -86,15 +79,17 @@ class Automata {
 				if (s.innerStates.length)
 					this._mapToVariable(s.id, s.innerStates);
 			}
+
+			s = queue.shift();
 		}
 	}
 
 	/**
 	 * Associa estados termos às variáveis as quais eles estão relacionados
-	 * @param {symbol} variableID Identificador do estado que representa a variável
-	 * @param {AutomataState[]} states Lista com os estados que podem ocorrer para essa variável
+	 * @param variableID Identificador do estado que representa a variável
+	 * @param states Lista com os estados que podem ocorrer para essa variável
 	 */
-	_mapToVariable (variableID, states) {
+	private _mapToVariable (variableID: symbol, states: AutomataState[]): void {
 		for (const s of states) {
 			if (s.innerStates.length)
 				this._mapToVariable(variableID, s.innerStates);
@@ -105,10 +100,12 @@ class Automata {
 
 	/**
 	 * Registra as transições possíveis para um estado
-	 * @param {AutomataState} state Estado chave que terá suas possíveis transições identificadas
-	 * @param {AutomataState[]} nextStates Lista com o restante dos estados que podem ocorrer após o estado chave
+	 * @param state Estado chave que terá suas possíveis transições identificadas
+	 * @param nextStates Lista com o restante dos estados que podem ocorrer após o estado chave
 	 */
-	_createTransitions (state, nextStates) {
+	private _createTransitions (state: AutomataState, nextStates: AutomataState[]): void {
+		const possibleTransitions: AutomataState[] = [];
+
 		switch (state.type) {
 			case AutomataStateType.LIST:
 				for (const item of state.innerStates) {
@@ -131,7 +128,6 @@ class Automata {
 
 				// * Fall through para tratar variável simples
 			default:
-				const possibleTransitions = [];
 				for (const nextState of nextStates) {
 					const possibilities = this._getPossibleTransitions(nextState);
 					possibleTransitions.push(...possibilities.transitions);
@@ -149,11 +145,10 @@ class Automata {
 
 	/**
 	 * Processa um estado do autômato para identificar as transições que podem ser geradas a partir dele
-	 * @param {AutomataState} state Estado do autômato a ser avaliado
-	 * @returns
+	 * @param state Estado do autômato a ser avaliado
 	 */
-	_getPossibleTransitions (state) {
-		const result = { transitions: [], stop: false };
+	private _getPossibleTransitions (state: AutomataState): { transitions: AutomataState[]; stop: boolean; } {
+		const result = { transitions: [] as AutomataState[], stop: false };
 
 		switch (state.type) {
 			case AutomataStateType.LIST:
@@ -206,19 +201,20 @@ class Automata {
 
 	/**
 	 * Identifica e obtém a lista com os estados iniciais do autômato
-	 * @returns {AutomataState[]}
 	 */
-	_getInitialStates () {
-		let s;
+	private _getInitialStates (): AutomataState[] {
 		const queue = this._states.slice();
 		const initialStates = [];
+		let s = queue.shift();
 
-		while (s = queue.shift()) {
+		while (s) {
 			if (s.innerStates.length)
 				queue.push(...s.innerStates);
 
 			if (s.isInitial)
 				initialStates.push(s);
+
+			s = queue.shift();
 		}
 
 		return initialStates;
@@ -226,19 +222,15 @@ class Automata {
 
 	/**
 	 * Verifica se o usuário falou um comando reconhecido por este autômato
-	 * @param {string} str Transcrição do conteúdo falado pelo usuário
-	 * @param {boolean} allMatches Caso o autômato seja ambíguo, define se todos os possíveis reconhecimentos devem ser retornados (verdadeiro) ou apenas o primeiro (falso)
-	 * @returns {Match | Match[]}
+	 * @param str Transcrição do conteúdo falado pelo usuário
+	 * @param allMatches Caso o autômato seja ambíguo, define se todos os possíveis reconhecimentos devem ser retornados (verdadeiro) ou apenas o primeiro (falso)
 	 */
-	match (str, allMatches = false) {
-		/**
-		 * @type {{ state: AutomataState, matchObj: Match }[]}
-		 */
-		let currentStates = [];
+	public match (str: string, allMatches: boolean = false): Match | Match[] {
+		let currentStates: Array<{ state: AutomataState, matchObj: Match }> = [];
 		const initialStates = this._getInitialStates();
 
 		const input = str.split(" ");
-		let currentWord = input.shift();
+		let currentWord = input.shift() || "";
 
 		for (const state of initialStates) {
 			// Ignora estado inicial que não reconhece a primeira palavra falada pelo usuário
@@ -252,7 +244,7 @@ class Automata {
 				// Se esse estado estiver associado a alguma variável, adiciona o termo a ela no resultado
 				const associatedVariables = this._statesToVariablesMap.get(state.id) || [];
 				for (const v of associatedVariables)
-					matchObj.variables[this._statesMap.get(v).value] = currentWord;
+					matchObj.variables[this._statesMap.get(v)!.value] = currentWord;
 			}
 
 			currentStates.push({ state, matchObj });
@@ -260,7 +252,7 @@ class Automata {
 
 		while (currentStates.length && input.length) {
 			const nextStates = [];
-			currentWord = input.shift();
+			currentWord = input.shift() || "";
 
 			for (const { state, matchObj } of currentStates) {
 				const transitions = this._transitionTable.get(state.id) || [];
@@ -276,7 +268,7 @@ class Automata {
 						// Se esse estado estiver associado a alguma variável, adiciona o termo a ela no resultado
 						const associatedVariables = this._statesToVariablesMap.get(t.id) || [];
 						for (const v of associatedVariables) {
-							const key = this._statesMap.get(v).value;
+							const key = this._statesMap.get(v)!.value;
 							transitionMatchObj.variables[key] += (transitionMatchObj.variables[key].length ? " " : "") + currentWord;
 						}
 					}
@@ -314,13 +306,9 @@ class Automata {
 
 	/**
 	 * Obtém a lista todos os comandos possíveis de serem reconhecidos por este autômato
-	 * @returns {string[]}
 	 */
-	getAllPossibilities () {
-		/**
-		 * @type {{ state: AutomataState, cmd: string }[]}
-		 */
-		let currentStates = [];
+	public getAllPossibilities (): string[] {
+		let currentStates: Array<{ state: AutomataState, cmd: string }> = [];
 
 		const possibilities = [];
 		const initialStates = this._getInitialStates();
@@ -349,5 +337,3 @@ class Automata {
 		return possibilities;
 	}
 }
-
-module.exports = Automata;

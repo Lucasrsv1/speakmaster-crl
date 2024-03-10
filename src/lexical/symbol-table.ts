@@ -1,4 +1,4 @@
-const TokenType = require("./token-type");
+import { TokenType } from "./token-type";
 
 /**
  * Tabela que associa caracteres de símbolos aos tipos de token que eles representam
@@ -6,9 +6,8 @@ const TokenType = require("./token-type");
 class SymbolTable {
 	/**
 	 * Associa um caractere de símbolo ao tipo de token que ele representa
-	 * @type {Map<string, TokenType>}
 	 */
-	hashMap;
+	private hashMap: Map<string, TokenType>;
 
 	constructor () {
 		this.hashMap = new Map();
@@ -24,21 +23,19 @@ class SymbolTable {
 
 	/**
 	 * Verifica se o lexema lido é um símbolo
-	 * @param {string} token Conteúdo do lexema lido
-	 * @returns {boolean}
+	 * @param token Conteúdo do lexema lido
 	 */
-	contains (token) {
+	public contains (token: string): boolean {
 		return this.hashMap.has(token);
 	}
 
 	/**
 	 * Retorna o tipo de token correspondente ao lexema lido
-	 * @param {string} token Conteúdo do lexema lido
-	 * @returns {TokenType}
+	 * @param token Conteúdo do lexema lido
 	 */
-	find (token) {
-		return this.contains(token) ? this.hashMap.get(token) : TokenType.STRING;
+	public find (token: string): TokenType {
+		return this.contains(token) ? this.hashMap.get(token) as TokenType : TokenType.STRING;
 	}
 }
 
-module.exports = new SymbolTable();
+export default new SymbolTable();

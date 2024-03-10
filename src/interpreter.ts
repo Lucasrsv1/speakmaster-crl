@@ -1,10 +1,9 @@
-const AutomataState = require("./automata/automata-state");
-const { AutomataStateType } = require("./automata/automata-state");
+import { AutomataState, AutomataStateType } from "./automata/automata-state";
 
-const LexicalAnalysis = require("./lexical/lexical-analysis");
-const TokenType = require("./lexical/token-type");
+import { LexicalAnalysis } from "./lexical/lexical-analysis";
+import { TokenType } from "./lexical/token-type";
 
-const SyntacticAnalysis = require("./syntactic/syntactic-analysis");
+import { SyntacticAnalysis } from "./syntactic/syntactic-analysis";
 
 /**
  * Interpretador da linguagem de definição de autômatos de comandos
@@ -12,21 +11,18 @@ const SyntacticAnalysis = require("./syntactic/syntactic-analysis");
 class Interpreter {
 	/**
 	 * Flag de depuração do interpretador
-	 * @type {boolean}
 	 */
-	debugging;
+	public debugging: boolean;
 
 	/**
 	 * Flag de depuração do analisador léxico
-	 * @type {boolean}
 	 */
-	lexicalDebugging;
+	public lexicalDebugging: boolean;
 
 	/**
 	 * Flag de depuração do analisador sintático
-	 * @type {boolean}
 	 */
-	syntacticDebugging;
+	public syntacticDebugging: boolean;
 
 	constructor () {
 		this.debugging = false;
@@ -36,10 +32,9 @@ class Interpreter {
 
 	/**
 	 * Gera os estados de um autômato a partir da string de definição dele
-	 * @param {string} cmd String de definição e estruturação de um comando
-	 * @returns {AutomataState[]}
+	 * @param cmd String de definição e estruturação de um comando
 	 */
-	getAutomataStates (cmd) {
+	public getAutomataStates (cmd: string): AutomataState[] {
 		const lexicalAnalysis = new LexicalAnalysis(cmd, this.lexicalDebugging);
 		const syntacticAnalysis = new SyntacticAnalysis(lexicalAnalysis, this.syntacticDebugging);
 
@@ -57,9 +52,9 @@ class Interpreter {
 
 	/**
 	 * Testa o analisador léxico
-	 * @param {string} cmd String de definição e estruturação de um comando
+	 * @param cmd String de definição e estruturação de um comando
 	 */
-	testLexicalAnalysis (cmd) {
+	public testLexicalAnalysis (cmd: string): void {
 		let currentLexeme;
 		const lexicalAnalysis = new LexicalAnalysis(cmd, true);
 
@@ -70,9 +65,9 @@ class Interpreter {
 
 	/**
 	 * Identifica e marca como inicial os devidos estados do autômato
-	 * @param {AutomataState[]} states Estados do autômato
+	 * @param states Estados do autômato
 	 */
-	_setInitialStates (states) {
+	private _setInitialStates (states: AutomataState[]): void {
 		for (const state of states) {
 			if (this.debugging)
 				console.log("[Interpreter Log] Looking for inicial states, now processing:", state.id);
@@ -108,9 +103,9 @@ class Interpreter {
 
 	/**
 	 * Identifica e marca como final os devidos estados do autômato
-	 * @param {AutomataState[]} states Estados do autômato
+	 * @param states Estados do autômato
 	 */
-	_setFinalStates (states) {
+	private _setFinalStates (states: AutomataState[]): void {
 		for (let i = states.length - 1; i >= 0; i--) {
 			const state = states[i];
 			if (this.debugging)
@@ -148,4 +143,4 @@ class Interpreter {
 	}
 }
 
-module.exports = new Interpreter();
+export default new Interpreter();

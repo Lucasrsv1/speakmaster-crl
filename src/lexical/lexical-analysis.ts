@@ -1,65 +1,57 @@
-const Lexeme = require("./lexeme");
-const symbolTable = require("./symbol-table");
-const TokenType = require("./token-type");
+import { Lexeme } from "./lexeme";
+import symbolTable from "./symbol-table";
+import { TokenType } from "./token-type";
 
 /**
  * Realiza a análise léxica de um comando definido pela
  * linguagem de definição de autômatos de comandos
  */
-class LexicalAnalysis {
+export class LexicalAnalysis {
 	/**
 	 * Conteúdo ainda não processado
-	 * @type {string[]}
 	 */
-	input;
+	public input: string[];
 
 	/**
 	 * Flag de depuração
-	 * @type {boolean}
 	 */
-	debugging;
+	public debugging: boolean;
 
 	/**
 	 * Posição atual do cursor para o token atual
-	 * @type {number}
 	 */
-	_position;
+	private _position: number;
 
 	/**
 	 * Linha onde começa o token atual
-	 * @type {number}
 	 */
-	_line;
+	private _line: number;
 
 	/**
 	 * Linha atual do cursor na leitura da entrada
-	 * @type {number}
 	 */
-	_nextLine;
+	private _nextLine: number;
 
 	/**
 	 * Posição atual do cursor para onde começa o token atual na linha atual
-	 * @type {number}
 	 */
-	_column;
+	private _column: number;
 
 	/**
 	 * Posição atual do cursor na leitura da entrada
-	 * @type {number}
 	 */
-	_nextColumn;
+	private _nextColumn: number;
 
 	/**
 	 * Tamanho do último token processado para atualização da posição
-	 * @type {number}
 	 */
-	_lastTokenSize;
+	private _lastTokenSize: number;
 
 	/**
-	 * @param {string} input String de definição e estruturação de um comando
-	 * @param {boolean} debugging Flag de depuração
+	 * @param input String de definição e estruturação de um comando
+	 * @param debugging Flag de depuração
 	 */
-	constructor (input, debugging) {
+	constructor (input: string, debugging: boolean = false) {
 		this.input = input.split("");
 		this.debugging = debugging;
 		this._position = 1;
@@ -72,39 +64,35 @@ class LexicalAnalysis {
 
 	/**
 	 * Obtém a posição do cursor para onde começa o token atual no input
-	 * @returns {number}
 	 */
-	getPosition () {
+	public getPosition (): number {
 		return this._position;
 	}
 
 	/**
 	 * Obtém a linha onde começa o token atual no input
-	 * @returns {number}
 	 */
-	getLine () {
+	public getLine (): number {
 		return this._line;
 	}
 
 	/**
 	 * Obtém a posição do cursor para onde começa o token atual na linha atual do input
-	 * @returns {number}
 	 */
-	getColumn () {
+	public getColumn (): number {
 		return this._column;
 	}
 
 	/**
 	 * Obtém o próximo lexema da definição de comando sendo analisada
-	 * @returns {Lexeme}
 	 */
-	nextToken () {
+	public nextToken (): Lexeme {
 		this._position += this._lastTokenSize;
 		this._line = this._nextLine;
 		this._column = this._nextColumn;
 		this._lastTokenSize = 0;
 
-		let lex = new Lexeme("", TokenType.END);
+		const lex = new Lexeme("", TokenType.END);
 		let state = 1;
 
 		while (![2, 4].includes(state)) {
@@ -116,7 +104,7 @@ class LexicalAnalysis {
 				case 1:
 					if (c === undefined) {
 						state = 4;
-					} else if ([' ', "\n", '\t', '\r'].includes(c)) {
+					} else if ([" ", "\n", "\t", "\r"].includes(c)) {
 						if (c === "\n") {
 							this._nextLine++;
 							this._nextColumn = 1;
@@ -129,7 +117,7 @@ class LexicalAnalysis {
 						this._column = this._nextColumn;
 						this._lastTokenSize = 0;
 						state = 1;
-					} else if ([',', '(', ')', '[', ']', '{', '}'].includes(c)) {
+					} else if ([",", "(", ")", "[", "]", "{", "}"].includes(c)) {
 						this._nextColumn++;
 						lex.token += c;
 						state = 2;
@@ -150,7 +138,7 @@ class LexicalAnalysis {
 						}
 
 						state = 4;
-					} else if ([',', '(', ')', '[', ']', '{', '}'].includes(c)) {
+					} else if ([",", "(", ")", "[", "]", "{", "}"].includes(c)) {
 						this.input.unshift(c);
 						this._lastTokenSize--;
 						state = 4;
@@ -173,5 +161,3 @@ class LexicalAnalysis {
 		return lex;
 	}
 }
-
-module.exports = LexicalAnalysis;

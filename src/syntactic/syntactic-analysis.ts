@@ -1,40 +1,36 @@
-const AutomataState = require("../automata/automata-state");
-const { AutomataStateType } = require("../automata/automata-state");
+import { AutomataState, AutomataStateType } from "../automata/automata-state";
 
-const Lexeme = require("../lexical/lexeme");
-const LexicalAnalysis = require("../lexical/lexical-analysis");
-const TokenType = require("../lexical/token-type");
+import { Lexeme } from "../lexical/lexeme";
+import { LexicalAnalysis } from "../lexical/lexical-analysis";
+import { TokenType } from "../lexical/token-type";
 
-const CRLSyntaxError = require("./syntax-error");
+import { CRLSyntaxError } from "./syntax-error";
 
 /**
  * Realiza a análise sintática de um comando definido pela
  * linguagem de definição de autômatos de comandos
  */
-class SyntacticAnalysis {
+export class SyntacticAnalysis {
 	/**
 	 * Flag de depuração
-	 * @type {boolean}
 	 */
-	debugging;
+	public debugging: boolean;
 
 	/**
 	 * Analisador lexical para processamento léxico da linguagem
-	 * @type {LexicalAnalysis}
 	 */
-	_lexicalAnalysis;
+	private _lexicalAnalysis: LexicalAnalysis;
 
 	/**
 	 * Lexema atual sendo processado sintaticamente
-	 * @type {Lexeme}
 	 */
-	_currentLexeme;
+	private _currentLexeme: Lexeme;
 
 	/**
-	 * @param {string} lexicalAnalysis Analisador léxico carregado com o definição de um comando
-	 * @param {boolean} debugging Flag de depuração
+	 * @param lexicalAnalysis Analisador léxico carregado com o definição de um comando
+	 * @param debugging Flag de depuração
 	 */
-	constructor (lexicalAnalysis, debugging) {
+	constructor (lexicalAnalysis: LexicalAnalysis, debugging: boolean = false) {
 		this.debugging = debugging;
 
 		this._lexicalAnalysis = lexicalAnalysis;
@@ -43,9 +39,9 @@ class SyntacticAnalysis {
 
 	/**
 	 * Consome um lexema de certo tipo
-	 * @param {TokenType} type Tipo de token esperado
+	 * @param type Tipo de token esperado
 	 */
-	_eat (type) {
+	private _eat (type: TokenType): void {
 		if (this.debugging)
 			console.log(`[Syntactic Analysis Log] Expected ${type}, found token "${this._currentLexeme.token}" of type ${this._currentLexeme.type}`);
 
@@ -60,7 +56,7 @@ class SyntacticAnalysis {
 	/**
 	 * Carrega o próximo lexema
 	 */
-	_advance () {
+	private _advance (): void {
 		if (this.debugging)
 			console.log(`[Syntactic Analysis Log] Advanced ("${this._currentLexeme.token}", ${this._currentLexeme.type})`);
 
@@ -70,16 +66,15 @@ class SyntacticAnalysis {
 	/**
 	 * Inicia a análise sintática do comando
 	 */
-	analyze () {
+	public analyze (): AutomataState[] {
 		return this._processSentence();
 	}
 
 	/**
 	 * Processa o elemento `<sentence>` da gramática
-	 * @param {AutomataState[]} automataStates Lista de estados do autômato resultante do processamento dos lexemas
-	 * @returns {AutomataState[]}
+	 * @param automataStates Lista de estados do autômato resultante do processamento dos lexemas
 	 */
-	_processSentence (automataStates = []) {
+	private _processSentence (automataStates: AutomataState[] = []): AutomataState[] {
 		// Definição na gramática:
 		// <sentence> ::= <sentence> <sentence>
 		//                <term>
@@ -111,10 +106,9 @@ class SyntacticAnalysis {
 
 	/**
 	 * Processa o elemento `<optional>` da gramática
-	 * @param {boolean} isFirstElement Identifica se está processando o primeiro elemento do conjunto <optional>
-	 * @returns {AutomataState[]}
+	 * @param isFirstElement Identifica se está processando o primeiro elemento do conjunto <optional>
 	 */
-	_processOptional (isFirstElement = true) {
+	private _processOptional (isFirstElement: boolean = true): AutomataState[] {
 		// Definição na gramática:
 		// <optional> ::= <optional> <optional>
 		//                <term>
@@ -153,9 +147,8 @@ class SyntacticAnalysis {
 
 	/**
 	 * Processa o elemento `<list>` da gramática
-	 * @returns {AutomataState}
 	 */
-	_processList () {
+	private _processList (): AutomataState {
 		// Definição na gramática:
 		// <list>     ::= <item>
 		//                <item> ',' <list>
@@ -171,9 +164,8 @@ class SyntacticAnalysis {
 
 	/**
 	 * Processa o elemento `<item>` da gramática
-	 * @returns {AutomataState}
 	 */
-	_processItem () {
+	private _processItem (): AutomataState {
 		// Definição na gramática:
 		// <item>     ::= <item> <item>
 		//                <term>
@@ -208,13 +200,12 @@ class SyntacticAnalysis {
 
 	/**
 	 * Processa o elemento `<term>` da gramática
-	 * @returns {AutomataState}
 	 */
-	_processVariable () {
+	private _processVariable (): AutomataState {
 		// Definição na gramática:
 		// <variable> ::= <string> { <string> } ['(' <list> ')']
 
-		let variableName = [this._currentLexeme.token];
+		const variableName = [this._currentLexeme.token];
 		this._eat(TokenType.STRING);
 
 		while (this._currentLexeme.type === TokenType.STRING) {
@@ -234,9 +225,8 @@ class SyntacticAnalysis {
 
 	/**
 	 * Processa o elemento `<term>` da gramática
-	 * @returns {AutomataState}
 	 */
-	_processTerm () {
+	private _processTerm (): AutomataState {
 		// Definição na gramática:
 		// <term>     ::= <string>
 
@@ -245,5 +235,3 @@ class SyntacticAnalysis {
 		return automataState;
 	}
 }
-
-module.exports = SyntacticAnalysis;
