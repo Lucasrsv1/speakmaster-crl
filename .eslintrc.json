@@ -1,5 +1,6 @@
 {
 	"root": true,
+	"ignorePatterns": ["/dist"],
 	"plugins": ["only-warn"],
 	"rules": {
 		"no-fallthrough": "warn",
