@@ -223,6 +223,19 @@ export class Automata {
 	/**
 	 * Verifica se o usuário falou um comando reconhecido por este autômato
 	 * @param str Transcrição do conteúdo falado pelo usuário
+	 */
+	public match (str: string): Match;
+
+	/**
+	 * Verifica se o usuário falou um comando reconhecido por este autômato, retornando todos os possíveis reconhecimentos
+	 * @param str Transcrição do conteúdo falado pelo usuário
+	 * @param allMatches Caso o autômato seja ambíguo, faz com que todos os possíveis reconhecimentos sejam retornados
+	 */
+	public match (str: string, allMatches: true): Match[];
+
+	/**
+	 * Verifica se o usuário falou um comando reconhecido por este autômato
+	 * @param str Transcrição do conteúdo falado pelo usuário
 	 * @param allMatches Caso o autômato seja ambíguo, define se todos os possíveis reconhecimentos devem ser retornados (verdadeiro) ou apenas o primeiro (falso)
 	 */
 	public match (str: string, allMatches: boolean = false): Match | Match[] {

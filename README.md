@@ -8,7 +8,7 @@ Nessa linguagem, temos as seguintes funcionalidades:
 
 	![Termo opcional](./command-optional.png "Termo opcional")
 
-- Parêntesis são usados para denotar uma lista de possíveis termos que podem ser falados:
+- Parênteses são usados para denotar uma lista de possíveis termos que podem ser falados:
 
 	![Lista de possíveis termos](./command-list.png "Lista de possíveis termos")
 

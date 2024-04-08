@@ -6,6 +6,8 @@ import { SyntacticAnalysis } from "./syntactic/syntactic-analysis";
 import interpreter from "./interpreter";
 
 export { Automata } from "./automata/automata";
+export { Match } from "./automata/match";
+export { CRLSyntaxError } from "./syntactic/syntax-error";
 
 /**
  * Configura o modo de depuração do interpretador da linguagem CRL

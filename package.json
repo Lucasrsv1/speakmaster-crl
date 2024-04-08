@@ -1,6 +1,6 @@
 {
 	"name": "speakmaster-crl",
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"description": "Command Recognition Language",
 	"main": "./dist/index.js",
 	"module": "./dist/index.mjs",
