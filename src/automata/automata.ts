@@ -30,9 +30,19 @@ export class Automata {
 	private _defaultVariables: Record<string, string> = {};
 
 	/**
-	 * Associa a chave de um estado ao próprio estado
+	 * Inicializa o índice de cada variável restrita que compõe o autômato
+	 */
+	private _defaultRestrictedVariablesIndexes: Record<string, number> = {};
+
+	/**
+	 * Associa a chave de um estado às variáveis as quais ele pertence
 	 */
 	private _statesToVariablesMap: Map<symbol, symbol[]> = new Map();
+
+	/**
+	 * Associa a chave de um estado ao índice de cada variável restrita a qual ele pertence
+	 */
+	private _statesToRestrictedVariablesIndexesMap: Map<symbol, Array<{ variable: symbol, index: number }>> = new Map();
 
 	/**
 	 * Flag de depuração do autômato
@@ -56,6 +66,12 @@ export class Automata {
 			console.log("[Automata Log] Generated transition table:");
 			for (const key of this._transitionTable.keys())
 				console.log(`[Automata Log] ${this._statesMap.get(key)?.value} -> ${this._transitionTable.get(key)?.map(s => s.value).join(" | ")}`);
+
+			console.log("\n[Automata Log] State to restricted variable index:");
+			for (const [state, restrictedVariableIndexes] of this._statesToRestrictedVariablesIndexesMap) {
+				for (const { variable, index } of restrictedVariableIndexes)
+					console.log(`[Automata Log] Transition to state "${this._statesMap.get(state)?.value}" will set restricted variable "${this._statesMap.get(variable)?.value}" index to ${index}`);
+			}
 		}
 	}
 
@@ -76,8 +92,10 @@ export class Automata {
 				this._defaultVariables[s.value] = "";
 
 				// Associa os itens da lista de opções à variável
-				if (s.innerStates.length)
+				if (s.innerStates.length) {
 					this._mapToVariable(s.id, s.innerStates);
+					this._defaultRestrictedVariablesIndexes[s.value] = -1;
+				}
 			}
 
 			s = queue.shift();
@@ -85,7 +103,7 @@ export class Automata {
 	}
 
 	/**
-	 * Associa estados termos às variáveis as quais eles estão relacionados
+	 * Associa estados às variáveis as quais eles estão relacionados
 	 * @param variableID Identificador do estado que representa a variável
 	 * @param states Lista com os estados que podem ocorrer para essa variável
 	 */
@@ -93,7 +111,7 @@ export class Automata {
 		for (const s of states) {
 			if (s.innerStates.length)
 				this._mapToVariable(variableID, s.innerStates);
-			else if (s.type !== AutomataStateType.VARIABLE)
+			else
 				this._statesToVariablesMap.set(s.id, (this._statesToVariablesMap.get(s.id) || []).concat([variableID]));
 		}
 	}
@@ -120,6 +138,24 @@ export class Automata {
 				break;
 			case AutomataStateType.VARIABLE:
 				if (state.innerStates.length) {
+					// Percorre os itens da lista de opções desta variável restrita
+					// identificando as possíveis transições iniciais de cada item da
+					// lista a fim de associar a transição para estes estados com o
+					// índice do item reconhecido pela variável restrita
+					const list = state.innerStates[0].innerStates;
+					for (let index = 0; index < list.length; index++) {
+						const variableInitialStates = interpreter.getInitialStates(list[index].innerStates);
+
+						for (const variableInitialState of variableInitialStates) {
+							// Registra que transições para este estado deverão configurar o índice da
+							// variável restrita para o valor do índice do item atual da lista de opções
+							const restrictedVariableIndexes = this._statesToRestrictedVariablesIndexesMap.get(variableInitialState.id) || [];
+							restrictedVariableIndexes.push({ variable: state.id, index });
+
+							this._statesToRestrictedVariablesIndexesMap.set(variableInitialState.id, restrictedVariableIndexes);
+						}
+					}
+
 					// Se a variável tiver uma lista de opções,
 					// manda criar as transições a partir da lista
 					this._createTransitions(state.innerStates[0], nextStates);
@@ -250,15 +286,12 @@ export class Automata {
 			if (!state.match(currentWord))
 				continue;
 
-			const matchObj = new Match(true, this._defaultVariables);
-			if (state.type === AutomataStateType.VARIABLE) {
+			const matchObj = new Match(true, this._defaultVariables, this._defaultRestrictedVariablesIndexes);
+			if (state.type === AutomataStateType.VARIABLE)
 				matchObj.variables[state.value] = currentWord;
-			} else {
-				// Se esse estado estiver associado a alguma variável, adiciona o termo a ela no resultado
-				const associatedVariables = this._statesToVariablesMap.get(state.id) || [];
-				for (const v of associatedVariables)
-					matchObj.variables[this._statesMap.get(v)!.value] = currentWord;
-			}
+
+			this._appendToVariables(currentWord, state, matchObj);
+			this._setRestrictedVariablesIndexes(state, matchObj);
 
 			currentStates.push({ state, matchObj });
 		}
@@ -274,17 +307,12 @@ export class Automata {
 					if (!t.match(currentWord))
 						continue;
 
-					const transitionMatchObj = new Match(true, matchObj.variables);
-					if (t.type === AutomataStateType.VARIABLE) {
+					const transitionMatchObj = new Match(true, matchObj.variables, matchObj.restrictedVariablesIndexes);
+					if (t.type === AutomataStateType.VARIABLE)
 						transitionMatchObj.variables[t.value] += (transitionMatchObj.variables[t.value].length ? " " : "") + currentWord;
-					} else {
-						// Se esse estado estiver associado a alguma variável, adiciona o termo a ela no resultado
-						const associatedVariables = this._statesToVariablesMap.get(t.id) || [];
-						for (const v of associatedVariables) {
-							const key = this._statesMap.get(v)!.value;
-							transitionMatchObj.variables[key] += (transitionMatchObj.variables[key].length ? " " : "") + currentWord;
-						}
-					}
+
+					this._appendToVariables(currentWord, t, transitionMatchObj);
+					this._setRestrictedVariablesIndexes(t, transitionMatchObj);
 
 					nextStates.push({ state: t, matchObj: transitionMatchObj });
 				}
@@ -293,6 +321,8 @@ export class Automata {
 				// mesmo se houver uma transição válida para ela
 				if (state.type === AutomataStateType.VARIABLE) {
 					matchObj.variables[state.value] += " " + currentWord;
+					this._appendToVariables(currentWord, state, matchObj);
+
 					nextStates.push({ state, matchObj });
 				}
 			}
@@ -348,5 +378,32 @@ export class Automata {
 		}
 
 		return possibilities;
+	}
+
+	/**
+	 * Se o estado estiver associado a alguma variável, adiciona o termo a todas as variáveis associadas no objeto do resultado
+	 * @param word Termo atual
+	 * @param state Estado atual que reconhece o termo atual
+	 * @param matchObj Objeto de reconhecimento associado ao estado atual
+	 */
+	private _appendToVariables (word: string, state: AutomataState, matchObj: Match): void {
+		const associatedVariables = this._statesToVariablesMap.get(state.id) || [];
+		for (const v of associatedVariables) {
+			const variableName = this._statesMap.get(v)!.value;
+			matchObj.variables[variableName] += (matchObj.variables[variableName].length ? " " : "") + word;
+		}
+	}
+
+	/**
+	 * Caso o estado esteja em uma lista de uma variável restrita, atualiza o índice da variável restrita
+	 * @param state Estado atual que reconhece o termo atual
+	 * @param matchObj Objeto de reconhecimento associado ao estado atual
+	 */
+	private _setRestrictedVariablesIndexes (state: AutomataState, matchObj: Match): void {
+		const restrictedVariableIndexes = this._statesToRestrictedVariablesIndexesMap.get(state.id) || [];
+		for (const restrictedVariableIndex of restrictedVariableIndexes) {
+			const restrictedVariableName = this._statesMap.get(restrictedVariableIndex.variable)!.value;
+			matchObj.restrictedVariablesIndexes[restrictedVariableName] = restrictedVariableIndex.index;
+		}
 	}
 }

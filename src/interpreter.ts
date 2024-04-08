@@ -64,10 +64,12 @@ class Interpreter {
 	}
 
 	/**
-	 * Identifica e marca como inicial os devidos estados do autômato
+	 * Identifica os estados iniciais de um autômato
 	 * @param states Estados do autômato
 	 */
-	private _setInitialStates (states: AutomataState[]): void {
+	public getInitialStates (states: AutomataState[]): AutomataState[] {
+		let result: AutomataState[] = [];
+
 		for (const state of states) {
 			if (this.debugging)
 				console.log("[Interpreter Log] Looking for inicial states, now processing:", state.id);
@@ -75,34 +77,45 @@ class Interpreter {
 			switch (state.type) {
 				case AutomataStateType.LIST:
 					for (const item of state.innerStates)
-						this._setInitialStates(item.innerStates);
+						result = result.concat(this.getInitialStates(item.innerStates));
 
 					// Nenhum outro estado deve ser marcado como inicial
-					return;
+					return result;
 				case AutomataStateType.VARIABLE:
 					// Se a variável tiver uma lista de opções,
 					// percorre a lista atrás dos estados iniciais
 					if (state.innerStates.length)
-						this._setInitialStates(state.innerStates);
+						result = result.concat(this.getInitialStates(state.innerStates));
 					else
-						state.isInitial = true;
+						result.push(state);
 
 					// Nenhum outro estado deve ser marcado como inicial
-					return;
+					return result;
 				case AutomataStateType.OPTIONAL:
 					// Outros estados podem ser marcados como iniciais, pois este era opcional
-					this._setInitialStates(state.innerStates);
+					result = result.concat(this.getInitialStates(state.innerStates));
 					break;
 				default:
 					// Nenhum outro estado deve ser marcado como inicial
-					state.isInitial = true;
-					return;
+					result.push(state);
+					return result;
 			}
 		}
+
+		return result;
 	}
 
 	/**
-	 * Identifica e marca como final os devidos estados do autômato
+	 * Identifica e marca como inicial os devidos estados de um autômato
+	 * @param states Estados do autômato
+	 */
+	private _setInitialStates (states: AutomataState[]): void {
+		for (const state of this.getInitialStates(states))
+			state.isInitial = true;
+	}
+
+	/**
+	 * Identifica e marca como final os devidos estados de um autômato
 	 * @param states Estados do autômato
 	 */
 	private _setFinalStates (states: AutomataState[]): void {

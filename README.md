@@ -46,6 +46,7 @@ console.log(command.match("play where do we go from brave enough"));
 		ALBUM: 'brave enough',
 		'ALBUM TYPE': ''
 	},
+	restrictedVariablesIndexes: { 'ALBUM TYPE': -1 },
 	isBest: true
 }*/
 
@@ -57,11 +58,17 @@ console.log(command.match("play the song where do we go from the record brave en
 		ALBUM: 'brave enough',
 		'ALBUM TYPE': 'record'
 	},
+	restrictedVariablesIndexes: { 'ALBUM TYPE': 2 },
 	isBest: true
 }*/
 
 console.log(command.match("play where do we go"));
-/*Match { match: false, variables: {}, isBest: false }*/
+/*Match {
+	match: false,
+	variables: {},
+	restrictedVariablesIndexes: {},
+	isBest: false
+}*/
 
 // Para obter todas as possibilidades de comandos:
 console.log(command.getAllPossibilities());
