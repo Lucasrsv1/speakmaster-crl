@@ -116,32 +116,56 @@ export class SyntacticAnalysis {
 		//                '(' <list> ')'
 		//                '{' <variable> '}'
 
+		let innerState: AutomataState;
 		const automataStates = [];
+		const stringRepresentation: string[] = [];
 
-		if (this._currentLexeme.type === TokenType.OPEN_BRACKETS) {
-			this._eat(TokenType.OPEN_BRACKETS);
-			automataStates.push(...this._processOptional());
-			this._eat(TokenType.CLOSE_BRACKETS);
-		} else if (this._currentLexeme.type === TokenType.OPEN_PARENTHESIS) {
-			this._eat(TokenType.OPEN_PARENTHESIS);
-			automataStates.push(this._processList());
-			this._eat(TokenType.CLOSE_PARENTHESIS);
-		} else if (this._currentLexeme.type === TokenType.OPEN_CURLY_BRACKETS) {
-			this._eat(TokenType.OPEN_CURLY_BRACKETS);
-			automataStates.push(this._processVariable());
-			this._eat(TokenType.CLOSE_CURLY_BRACKETS);
-		} else {
-			automataStates.push(this._processTerm());
+		switch (this._currentLexeme.type) {
+			case TokenType.OPEN_BRACKETS:
+				this._eat(TokenType.OPEN_BRACKETS);
+
+				innerState = this._processOptional()[0];
+				automataStates.push(innerState);
+
+				this._eat(TokenType.CLOSE_BRACKETS);
+				stringRepresentation.push(innerState.value);
+				break;
+			case TokenType.OPEN_PARENTHESIS:
+				this._eat(TokenType.OPEN_PARENTHESIS);
+
+				innerState = this._processList();
+				automataStates.push(innerState);
+
+				this._eat(TokenType.CLOSE_PARENTHESIS);
+				stringRepresentation.push(innerState.value);
+				break;
+			case TokenType.OPEN_CURLY_BRACKETS:
+				this._eat(TokenType.OPEN_CURLY_BRACKETS);
+
+				innerState = this._processVariable();
+				automataStates.push(innerState);
+
+				this._eat(TokenType.CLOSE_CURLY_BRACKETS);
+				stringRepresentation.push(this._getCRLFromState(innerState));
+				break;
+			default:
+				innerState = this._processTerm();
+				automataStates.push(innerState);
+				stringRepresentation.push(innerState.value);
+				break;
 		}
 
-		while (this._currentLexeme.type !== TokenType.CLOSE_BRACKETS)
-			automataStates.push(...this._processOptional(false));
+		while (this._currentLexeme.type !== TokenType.CLOSE_BRACKETS) {
+			const innerAutomataStates = this._processOptional(false);
+			automataStates.push(...innerAutomataStates);
+			stringRepresentation.push(...innerAutomataStates.map(this._getCRLFromState));
+		}
 
 		if (!isFirstElement)
 			return automataStates;
 
 		return [
-			AutomataState.create("", AutomataStateType.OPTIONAL, automataStates)
+			AutomataState.create("[" + stringRepresentation.join(" ") + "]", AutomataStateType.OPTIONAL, automataStates)
 		];
 	}
 
@@ -153,13 +177,21 @@ export class SyntacticAnalysis {
 		// <list>     ::= <item>
 		//                <item> ',' <list>
 
-		const possibleStates = [this._processItem()];
+		let stringRepresentation: string = "";
+		let item: AutomataState = this._processItem();
+
+		const possibleStates = [item];
+		stringRepresentation = item.value;
+
 		while (this._currentLexeme.type === TokenType.COMMA) {
 			this._eat(TokenType.COMMA);
-			possibleStates.push(this._processItem());
+			item = this._processItem();
+
+			possibleStates.push(item);
+			stringRepresentation += ", " + item.value;
 		}
 
-		return AutomataState.create("", AutomataStateType.LIST, possibleStates);
+		return AutomataState.create("(" + stringRepresentation + ")", AutomataStateType.LIST, possibleStates);
 	}
 
 	/**
@@ -173,29 +205,51 @@ export class SyntacticAnalysis {
 		//                '(' <list> ')'
 		//                '{' <variable> '}'
 
+		let innerState: AutomataState;
 		const automataStates = [];
+		const stringRepresentation: string[] = [];
+
 		do {
-			if (this._currentLexeme.type === TokenType.OPEN_BRACKETS) {
-				this._eat(TokenType.OPEN_BRACKETS);
-				automataStates.push(...this._processOptional());
-				this._eat(TokenType.CLOSE_BRACKETS);
-			} else if (this._currentLexeme.type === TokenType.OPEN_PARENTHESIS) {
-				this._eat(TokenType.OPEN_PARENTHESIS);
-				automataStates.push(this._processList());
-				this._eat(TokenType.CLOSE_PARENTHESIS);
-			} else if (this._currentLexeme.type === TokenType.OPEN_CURLY_BRACKETS) {
-				this._eat(TokenType.OPEN_CURLY_BRACKETS);
-				automataStates.push(this._processVariable());
-				this._eat(TokenType.CLOSE_CURLY_BRACKETS);
-			} else {
-				automataStates.push(this._processTerm());
+			switch (this._currentLexeme.type) {
+				case TokenType.OPEN_BRACKETS:
+					this._eat(TokenType.OPEN_BRACKETS);
+
+					innerState = this._processOptional()[0];
+					automataStates.push(innerState);
+
+					this._eat(TokenType.CLOSE_BRACKETS);
+					stringRepresentation.push(innerState.value);
+					break;
+				case TokenType.OPEN_PARENTHESIS:
+					this._eat(TokenType.OPEN_PARENTHESIS);
+
+					innerState = this._processList();
+					automataStates.push(innerState);
+
+					this._eat(TokenType.CLOSE_PARENTHESIS);
+					stringRepresentation.push(innerState.value);
+					break;
+				case TokenType.OPEN_CURLY_BRACKETS:
+					this._eat(TokenType.OPEN_CURLY_BRACKETS);
+
+					innerState = this._processVariable();
+					automataStates.push(innerState);
+
+					this._eat(TokenType.CLOSE_CURLY_BRACKETS);
+					stringRepresentation.push(this._getCRLFromState(innerState));
+					break;
+				default:
+					innerState = this._processTerm();
+					automataStates.push(innerState);
+					stringRepresentation.push(innerState.value);
+					break;
 			}
 		} while (
 			this._currentLexeme.type !== TokenType.COMMA &&
 			this._currentLexeme.type !== TokenType.CLOSE_PARENTHESIS
 		);
 
-		return AutomataState.create("", AutomataStateType.ITEM, automataStates);
+		return AutomataState.create(stringRepresentation.join(" "), AutomataStateType.ITEM, automataStates);
 	}
 
 	/**
@@ -233,5 +287,16 @@ export class SyntacticAnalysis {
 		const automataState = AutomataState.create(this._currentLexeme.token, AutomataStateType.TERM);
 		this._eat(TokenType.STRING);
 		return automataState;
+	}
+
+	private _getCRLFromState (state: AutomataState): string {
+		if (state.type !== AutomataStateType.VARIABLE)
+			return state.value;
+
+		// Se for uma variável restrita ela terá uma lista de restrições
+		if (state.innerStates[0])
+			return "{" + state.value + " " + state.innerStates[0].value + "}";
+
+		return "{" + state.value + "}";
 	}
 }

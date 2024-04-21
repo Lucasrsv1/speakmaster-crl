@@ -95,6 +95,33 @@ console.log(command.getAllPossibilities());
 	'play the song {SONG NAME} from the disc {ALBUM}',
 	'play the song {SONG NAME} from the record {ALBUM}'
 ]*/
+
+// Para obter o comando de entrada do autômato
+console.log(command.command);
+// play [[the] song] {SONG NAME} from [[the] {ALBUM TYPE (album, disc, record)}] {ALBUM}
+```
+
+### Para obter informações sobre as variáveis do comando:
+
+```javascript
+console.log(command.getVariablesNames());
+// [ 'SONG NAME', 'ALBUM', 'ALBUM TYPE' ]
+
+console.log(command.getRestrictedVariablesNames());
+// [ 'ALBUM TYPE' ]
+
+console.log(command.getUnrestrictedVariablesNames());
+// [ 'SONG NAME', 'ALBUM' ]
+
+console.log(command.getRestrictedVariableOptions("ALBUM TYPE"));
+// [ 'album', 'disc', 'record' ]
+
+// Passar uma variável irrestrita para a função getRestrictedVariableOptions irá retornar um vetor vazio
+console.log(command.getRestrictedVariableOptions("SONG NAME"));
+// []
+
+console.log(command.getRestrictedVariableOptions("ALBUM"));
+// []
 ```
 
 ### Para apenas validar a sintaxe de um comando:

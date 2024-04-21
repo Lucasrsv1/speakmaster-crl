@@ -7,3 +7,5 @@ console.log(automata.match("move mouse up"));
 console.log(automata.match("move mouse down"));
 console.log(automata.match("move mouse left"));
 console.log(automata.match("move mouse right"));
+
+console.log(automata.getRestrictedVariableOptions("DIRECTION"));

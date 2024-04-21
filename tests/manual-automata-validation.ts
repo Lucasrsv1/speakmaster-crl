@@ -20,10 +20,10 @@ function setDebug (on: boolean): void {
  */
 const states = [
 	new AutomataState("play", AutomataStateType.TERM, true, false),
-	new AutomataState("", AutomataStateType.OPTIONAL, false, false, [
-		new AutomataState("", AutomataStateType.OPTIONAL, false, false, [
+	new AutomataState("[[the [really awesome]] song]", AutomataStateType.OPTIONAL, false, false, [
+		new AutomataState("[the [really awesome]]", AutomataStateType.OPTIONAL, false, false, [
 			new AutomataState("the", AutomataStateType.TERM, false, false),
-			new AutomataState("", AutomataStateType.OPTIONAL, false, false, [
+			new AutomataState("[really awesome]", AutomataStateType.OPTIONAL, false, false, [
 				new AutomataState("really", AutomataStateType.TERM, false, false),
 				new AutomataState("awesome", AutomataStateType.TERM, false, false)
 			])
@@ -32,25 +32,25 @@ const states = [
 	]),
 	new AutomataState("SONG NAME", AutomataStateType.VARIABLE, false, false),
 	new AutomataState("from", AutomataStateType.TERM, false, false),
-	new AutomataState("", AutomataStateType.OPTIONAL, false, false, [
-		new AutomataState("", AutomataStateType.OPTIONAL, false, false, [
+	new AutomataState("[[the] {ALBUM TYPE (album, [blu-ray] disc, great vinyl [record])} called]", AutomataStateType.OPTIONAL, false, false, [
+		new AutomataState("[the]", AutomataStateType.OPTIONAL, false, false, [
 			new AutomataState("the", AutomataStateType.TERM, false, false)
 		]),
 		new AutomataState("ALBUM TYPE", AutomataStateType.VARIABLE, false, false, [
-			new AutomataState("", AutomataStateType.LIST, false, false, [
-				new AutomataState("", AutomataStateType.ITEM, false, false, [
+			new AutomataState("(album, [blu-ray] disc, great vinyl [record])", AutomataStateType.LIST, false, false, [
+				new AutomataState("album", AutomataStateType.ITEM, false, false, [
 					new AutomataState("album", AutomataStateType.TERM, false, false)
 				]),
-				new AutomataState("", AutomataStateType.ITEM, false, false, [
-					new AutomataState("", AutomataStateType.OPTIONAL, false, false, [
+				new AutomataState("[blu-ray] disc", AutomataStateType.ITEM, false, false, [
+					new AutomataState("[blu-ray]", AutomataStateType.OPTIONAL, false, false, [
 						new AutomataState("blu-ray", AutomataStateType.TERM, false, false)
 					]),
 					new AutomataState("disc", AutomataStateType.TERM, false, false)
 				]),
-				new AutomataState("", AutomataStateType.ITEM, false, false, [
+				new AutomataState("great vinyl [record]", AutomataStateType.ITEM, false, false, [
 					new AutomataState("great", AutomataStateType.TERM, false, false),
 					new AutomataState("vinyl", AutomataStateType.TERM, false, false),
-					new AutomataState("", AutomataStateType.OPTIONAL, false, false, [
+					new AutomataState("[record]", AutomataStateType.OPTIONAL, false, false, [
 						new AutomataState("record", AutomataStateType.TERM, false, false)
 					])
 				])
@@ -295,3 +295,33 @@ if (isRealAutomataEqualSoFar)
 	console.log("The real implementation os the Automata class resulted in the expected transition table");
 else
 	console.error("The real implementation os the Automata class resulted in a different transition table from what was expected");
+
+console.assert(
+	realAutomata.getVariablesNames().sort().join(", ") === "ALBUM, ALBUM TYPE, SONG NAME",
+	"The real implementation os the Automata class didn't have the expected variables names:",
+	realAutomata.getVariablesNames()
+);
+
+console.assert(
+	realAutomata.getRestrictedVariablesNames().join(", ") === "ALBUM TYPE",
+	"The real implementation os the Automata class didn't have the expected restricted variables names:",
+	realAutomata.getRestrictedVariablesNames()
+);
+
+console.assert(
+	realAutomata.getUnrestrictedVariablesNames().sort().join(", ") === "ALBUM, SONG NAME",
+	"The real implementation os the Automata class didn't have the expected unrestricted variables names:",
+	realAutomata.getUnrestrictedVariablesNames()
+);
+
+console.assert(
+	realAutomata.getRestrictedVariableOptions("ALBUM").join(", ") === "",
+	"The real implementation os the Automata class didn't have the expected options for variable ALBUM:",
+	realAutomata.getRestrictedVariableOptions("ALBUM")
+);
+
+console.assert(
+	realAutomata.getRestrictedVariableOptions("ALBUM TYPE").sort().join(", ") === "[blu-ray] disc, album, great vinyl [record]",
+	"The real implementation os the Automata class didn't have the expected options for variable ALBUM TYPE:",
+	realAutomata.getRestrictedVariableOptions("ALBUM TYPE")
+);

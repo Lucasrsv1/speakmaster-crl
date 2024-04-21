@@ -10,6 +10,11 @@ import { Match } from "./match";
  */
 export class Automata {
 	/**
+	 * String de definição e estruturação do comando deste autômato
+	 */
+	private _cmd: string;
+
+	/**
 	 * Lista de estados do autômato
 	 */
 	private _states: AutomataState[] = [];
@@ -42,7 +47,17 @@ export class Automata {
 	/**
 	 * Associa a chave de um estado ao índice de cada variável restrita a qual ele pertence
 	 */
-	private _statesToRestrictedVariablesIndexesMap: Map<symbol, Array<{ variable: symbol, index: number }>> = new Map();
+	private _restrictedVariablesIndexTransitionsMap: Map<string, Array<{ state: symbol, index: number }>> = new Map();
+
+	/**
+	 * Registra a lista de itens da restrição de cada variável restrita
+	 */
+	private _restrictedVariablesItems: Map<string, string[]> = new Map();
+
+	/**
+	 * Lista dos nomes das variáveis que aparecem alguma vez de forma irrestrita no autômato
+	 */
+	private _unrestrictedVariablesNames: Set<string> = new Set();
 
 	/**
 	 * Flag de depuração do autômato
@@ -54,6 +69,8 @@ export class Automata {
 	 * @param cmd String de definição e estruturação de um comando
 	 */
 	constructor (cmd: string) {
+		this._cmd = cmd;
+
 		// Obtém lista de estados a partir da string de definição do comando
 		this._states = interpreter.getAutomataStates(cmd);
 		this._initializeVariables();
@@ -68,9 +85,9 @@ export class Automata {
 				console.log(`[Automata Log] ${this._statesMap.get(key)?.value} -> ${this._transitionTable.get(key)?.map(s => s.value).join(" | ")}`);
 
 			console.log("\n[Automata Log] State to restricted variable index:");
-			for (const [state, restrictedVariableIndexes] of this._statesToRestrictedVariablesIndexesMap) {
-				for (const { variable, index } of restrictedVariableIndexes)
-					console.log(`[Automata Log] Transition to state "${this._statesMap.get(state)?.value}" will set restricted variable "${this._statesMap.get(variable)?.value}" index to ${index}`);
+			for (const [variable, indexTransitions] of this._restrictedVariablesIndexTransitionsMap) {
+				for (const { state, index } of indexTransitions)
+					console.log(`[Automata Log] Transition to state "${this._statesMap.get(state)?.value}" will set restricted variable "${variable}" index to ${index}`);
 			}
 		}
 	}
@@ -95,6 +112,8 @@ export class Automata {
 				if (s.innerStates.length) {
 					this._mapToVariable(s.id, s.innerStates);
 					this._defaultRestrictedVariablesIndexes[s.value] = -1;
+				} else {
+					this._unrestrictedVariablesNames.add(s.value);
 				}
 			}
 
@@ -138,23 +157,32 @@ export class Automata {
 				break;
 			case AutomataStateType.VARIABLE:
 				if (state.innerStates.length) {
+					const restrictedVariableItems: string[] = [];
+					const indexTransitions: Array<{ state: symbol, index: number }> = [];
+
 					// Percorre os itens da lista de opções desta variável restrita
 					// identificando as possíveis transições iniciais de cada item da
 					// lista a fim de associar a transição para estes estados com o
 					// índice do item reconhecido pela variável restrita
-					const list = state.innerStates[0].innerStates;
-					for (let index = 0; index < list.length; index++) {
-						const variableInitialStates = interpreter.getInitialStates(list[index].innerStates);
+					const items = state.innerStates[0].innerStates;
+					for (let index = 0; index < items.length; index++) {
+						// Registra o item atual como um dos itens da lista de restrições da variável
+						restrictedVariableItems.push(items[index].value);
 
+						const variableInitialStates = interpreter.getInitialStates(items[index].innerStates);
 						for (const variableInitialState of variableInitialStates) {
 							// Registra que transições para este estado deverão configurar o índice da
 							// variável restrita para o valor do índice do item atual da lista de opções
-							const restrictedVariableIndexes = this._statesToRestrictedVariablesIndexesMap.get(variableInitialState.id) || [];
-							restrictedVariableIndexes.push({ variable: state.id, index });
-
-							this._statesToRestrictedVariablesIndexesMap.set(variableInitialState.id, restrictedVariableIndexes);
+							indexTransitions.push({ state: variableInitialState.id, index });
 						}
 					}
+
+					// Salva a lista de restrições da variável mantendo apenas a última lista de restrições definida
+					this._restrictedVariablesItems.set(state.value, restrictedVariableItems);
+
+					// Salva as transições que devem identificar o índice do item reconhecido pela variável mantendo
+					// apenas as transições da última lista de restrições definida para a variável
+					this._restrictedVariablesIndexTransitionsMap.set(state.value, indexTransitions);
 
 					// Se a variável tiver uma lista de opções,
 					// manda criar as transições a partir da lista
@@ -254,6 +282,40 @@ export class Automata {
 		}
 
 		return initialStates;
+	}
+
+	/**
+	 * Se o estado estiver associado a alguma variável, adiciona o termo a todas as variáveis associadas no objeto do resultado
+	 * @param word Termo atual
+	 * @param state Estado atual que reconhece o termo atual
+	 * @param matchObj Objeto de reconhecimento associado ao estado atual
+	 */
+	private _appendToVariables (word: string, state: AutomataState, matchObj: Match): void {
+		const associatedVariables = this._statesToVariablesMap.get(state.id) || [];
+		for (const v of associatedVariables) {
+			const variableName = this._statesMap.get(v)!.value;
+			matchObj.variables[variableName] += (matchObj.variables[variableName].length ? " " : "") + word;
+		}
+	}
+
+	/**
+	 * Caso o estado esteja em uma lista de uma variável restrita, atualiza o índice da variável restrita
+	 * @param state Estado atual que reconhece o termo atual
+	 * @param matchObj Objeto de reconhecimento associado ao estado atual
+	 */
+	private _setRestrictedVariablesIndexes (state: AutomataState, matchObj: Match): void {
+		for (const [variable, indexTransitions] of this._restrictedVariablesIndexTransitionsMap) {
+			const transition = indexTransitions.find(t => t.state === state.id);
+			if (transition)
+				matchObj.restrictedVariablesIndexes[variable] = transition.index;
+		}
+	}
+
+	/**
+	 * Obtém o comando do autômato, ou seja, o código-fonte na linguagem CRL
+	 */
+	public get command (): string {
+		return this._cmd;
 	}
 
 	/**
@@ -381,29 +443,33 @@ export class Automata {
 	}
 
 	/**
-	 * Se o estado estiver associado a alguma variável, adiciona o termo a todas as variáveis associadas no objeto do resultado
-	 * @param word Termo atual
-	 * @param state Estado atual que reconhece o termo atual
-	 * @param matchObj Objeto de reconhecimento associado ao estado atual
+	 * Obtém a lista dos nomes de todas as variáveis definidas no autômato
 	 */
-	private _appendToVariables (word: string, state: AutomataState, matchObj: Match): void {
-		const associatedVariables = this._statesToVariablesMap.get(state.id) || [];
-		for (const v of associatedVariables) {
-			const variableName = this._statesMap.get(v)!.value;
-			matchObj.variables[variableName] += (matchObj.variables[variableName].length ? " " : "") + word;
-		}
+	public getVariablesNames (): string[] {
+		return Object.keys(this._defaultVariables);
 	}
 
 	/**
-	 * Caso o estado esteja em uma lista de uma variável restrita, atualiza o índice da variável restrita
-	 * @param state Estado atual que reconhece o termo atual
-	 * @param matchObj Objeto de reconhecimento associado ao estado atual
+	 * Obtém a lista dos nomes das variáveis restritas definidas no autômato
 	 */
-	private _setRestrictedVariablesIndexes (state: AutomataState, matchObj: Match): void {
-		const restrictedVariableIndexes = this._statesToRestrictedVariablesIndexesMap.get(state.id) || [];
-		for (const restrictedVariableIndex of restrictedVariableIndexes) {
-			const restrictedVariableName = this._statesMap.get(restrictedVariableIndex.variable)!.value;
-			matchObj.restrictedVariablesIndexes[restrictedVariableName] = restrictedVariableIndex.index;
-		}
+	public getRestrictedVariablesNames (): string[] {
+		return Object.keys(this._defaultRestrictedVariablesIndexes);
+	}
+
+	/**
+	 * Obtém a lista dos nomes das variáveis irrestritas definidas no autômato
+	 */
+	public getUnrestrictedVariablesNames (): string[] {
+		return Array.from(this._unrestrictedVariablesNames);
+	}
+
+	/**
+	 * Obtém a lista de restrições de uma dada variável restrita, sendo que cada item será uma
+	 * opção de valor reconhecido pela variável restrita definido usando o a linguagem CRL
+	 * @param variableName Nome da variável restrita
+	 * @returns Retorna a lista de opções, ou um vetor vazio caso a variável não seja restrita
+	 */
+	public getRestrictedVariableOptions (variableName: string): string[] {
+		return this._restrictedVariablesItems.get(variableName)?.slice() || [];
 	}
 }

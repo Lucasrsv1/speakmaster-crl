@@ -1,6 +1,6 @@
 {
 	"name": "speakmaster-crl",
-	"version": "1.2.0",
+	"version": "1.2.1",
 	"description": "Command Recognition Language",
 	"main": "./dist/index.js",
 	"module": "./dist/index.mjs",
@@ -20,11 +20,11 @@
 		"automata",
 		"command",
 		"language",
-		"command-recognition",
-		"command-language",
-		"command-recognition-language",
-		"command-automata",
-		"voice-command"
+		"command recognition",
+		"command language",
+		"command recognition language",
+		"command automata",
+		"voice command"
 	],
 	"devDependencies": {
 		"@typescript-eslint/eslint-plugin": "^7.1.1",
