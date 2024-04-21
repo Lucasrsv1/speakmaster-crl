@@ -63,10 +63,11 @@ console.log(command.getAllPossibilities());
 	'play the song {SONG NAME} from the record {ALBUM}'
 ]*/
 
-// Para obter o comando de entrada do autômato
+// Para obter o comando de entrada do autômato:
 console.log(command.command);
 // play [[the] song] {SONG NAME} from [[the] {ALBUM TYPE (album, disc, record)}] {ALBUM}
 
+// Para obter informações sobre as variáveis do comando:
 console.log(command.getVariablesNames());
 // [ 'SONG NAME', 'ALBUM', 'ALBUM TYPE' ]
 
@@ -86,6 +87,90 @@ console.log(command.getRestrictedVariableOptions("SONG NAME"));
 console.log(command.getRestrictedVariableOptions("ALBUM"));
 // []
 
+// Para controlar se a avaliação deve diferenciar letras maiúsculas e minúsculas:
+// Case sensitive
+console.log(command.match("PLAY Where Do We Go FROM Brave Enough", true));
+/*Match {
+	match: false,
+	variables: {},
+	restrictedVariablesIndexes: {},
+	isBest: false
+}*/
+
+// Case insensitive
+console.log(command.match("PLAY Where Do We Go FROM Brave Enough", false));
+/*Match {
+	match: true,
+	variables: {
+	  'SONG NAME': 'Where Do We Go',
+	  ALBUM: 'Brave Enough',
+	  'ALBUM TYPE': ''
+	},
+	restrictedVariablesIndexes: { 'ALBUM TYPE': -1 },
+	isBest: true
+}*/
+
+// Case insensitive é o padrão
+console.log(command.match("PLAY Where Do We Go FROM Brave Enough"));
+/*Match {
+	match: true,
+	variables: {
+	  'SONG NAME': 'Where Do We Go',
+	  ALBUM: 'Brave Enough',
+	  'ALBUM TYPE': ''
+	},
+	restrictedVariablesIndexes: { 'ALBUM TYPE': -1 },
+	isBest: true
+}*/
+
+// Para obter todos os reconhecimentos possíveis:
+console.log(
+	command.match("play the song where do we go from the record brave enough", false, true)
+);
+/*[
+	Match {
+		match: true,
+		variables: {
+			'SONG NAME': 'where do we go',
+			ALBUM: 'brave enough',
+			'ALBUM TYPE': 'record'
+		},
+		restrictedVariablesIndexes: { 'ALBUM TYPE': 2 },
+		isBest: true
+	},
+	Match {
+		match: true,
+		variables: {
+		'SONG NAME': 'where do we go',
+		ALBUM: 'the record brave enough',
+		'ALBUM TYPE': ''
+		},
+		restrictedVariablesIndexes: { 'ALBUM TYPE': -1 },
+		isBest: false
+	},
+	Match {
+		match: true,
+		variables: {
+			'SONG NAME': 'the song where do we go',
+			ALBUM: 'brave enough',
+			'ALBUM TYPE': 'record'
+		},
+		restrictedVariablesIndexes: { 'ALBUM TYPE': 2 },
+		isBest: false
+	},
+	Match {
+		match: true,
+		variables: {
+			'SONG NAME': 'the song where do we go',
+			ALBUM: 'the record brave enough',
+			'ALBUM TYPE': ''
+		},
+		restrictedVariablesIndexes: { 'ALBUM TYPE': -1 },
+		isBest: false
+	}
+]*/
+
+// Para apenas validar a sintaxe de um comando:
 const error = validateSyntax("play [the] song] {SONG NAME}")!;
 
 console.log(error.message, { line: error.line, column: error.column });

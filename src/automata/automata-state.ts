@@ -104,10 +104,14 @@ export class AutomataState {
 	/**
 	 * Verifica se o estado do autômato reconhece dado termo ou não
 	 * @param content Conteúdo a ser validado para se descobrir se o estado o reconhece ou não
+	 * @param caseSensitive Caso seja verdadeiro, a comparação irá diferenciar letras maiúsculas e minúsculas
 	 */
-	public match (content: string): boolean {
+	public match (content: string, caseSensitive: boolean = false): boolean {
 		return this.type === AutomataStateType.VARIABLE || (
-			this.type === AutomataStateType.TERM && this.value === content
+			this.type === AutomataStateType.TERM && (
+				(caseSensitive && this.value === content) ||
+				(!caseSensitive && this.value.toLowerCase() === content.toLowerCase())
+			)
 		);
 	}
 

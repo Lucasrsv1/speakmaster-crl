@@ -1,5 +1,5 @@
 /**
- * Representa a correspondência ou não entre uma fala do usuário e um autômato
+ * Representa a correspondência ou não entre uma dada entrada do usuário e um autômato
  */
 export class Match {
 	/**
@@ -23,7 +23,7 @@ export class Match {
 	public isBest: boolean;
 
 	/**
-	 * Define um objeto de correspondência entre uma fala do usuário e um autômato
+	 * Define um objeto de correspondência entre uma dada entrada do usuário e um autômato
 	 * @param match Define se o comando foi reconhecido pelo autômato
 	 * @param variables Variáveis e seus valores já reconhecidos pelo autômato
 	 */

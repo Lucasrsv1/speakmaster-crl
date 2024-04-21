@@ -319,33 +319,42 @@ export class Automata {
 	}
 
 	/**
-	 * Verifica se o usuário falou um comando reconhecido por este autômato
-	 * @param str Transcrição do conteúdo falado pelo usuário
+	 * Verifica se a entrada é um comando reconhecido por este autômato sem diferenciar letras maiúsculas e minúsculas
+	 * @param str Entrada com o conteúdo a ser reconhecido pelo autômato
 	 */
 	public match (str: string): Match;
 
 	/**
-	 * Verifica se o usuário falou um comando reconhecido por este autômato, retornando todos os possíveis reconhecimentos
-	 * @param str Transcrição do conteúdo falado pelo usuário
-	 * @param allMatches Caso o autômato seja ambíguo, faz com que todos os possíveis reconhecimentos sejam retornados
+	 * Verifica se a entrada é um comando reconhecido por este autômato
+	 * @param str Entrada com o conteúdo a ser reconhecido pelo autômato
+	 * @param caseSensitive Caso seja verdadeiro, a comparação irá diferenciar letras maiúsculas e minúsculas
 	 */
-	public match (str: string, allMatches: true): Match[];
+	public match (str: string, caseSensitive: boolean): Match;
 
 	/**
-	 * Verifica se o usuário falou um comando reconhecido por este autômato
-	 * @param str Transcrição do conteúdo falado pelo usuário
+	 * Verifica se a entrada é um comando reconhecido por este autômato, retornando todos os possíveis reconhecimentos
+	 * @param str Entrada com o conteúdo a ser reconhecido pelo autômato
+	 * @param caseSensitive Caso seja verdadeiro, a comparação irá diferenciar letras maiúsculas e minúsculas
+	 * @param allMatches Caso o autômato seja ambíguo, faz com que todos os possíveis reconhecimentos sejam retornados
+	 */
+	public match (str: string, caseSensitive: boolean, allMatches: true): Match[];
+
+	/**
+	 * Verifica se a entrada é um comando reconhecido por este autômato
+	 * @param str Entrada com o conteúdo a ser reconhecido pelo autômato
+	 * @param caseSensitive Caso seja verdadeiro, a comparação irá diferenciar letras maiúsculas e minúsculas
 	 * @param allMatches Caso o autômato seja ambíguo, define se todos os possíveis reconhecimentos devem ser retornados (verdadeiro) ou apenas o primeiro (falso)
 	 */
-	public match (str: string, allMatches: boolean = false): Match | Match[] {
+	public match (str: string, caseSensitive: boolean = false, allMatches: boolean = false): Match | Match[] {
 		let currentStates: Array<{ state: AutomataState, matchObj: Match }> = [];
 		const initialStates = this._getInitialStates();
 
-		const input = str.split(" ");
-		let currentWord = input.shift() || "";
+		const input = str.trim().split(" ");
+		let currentWord = input.shift()?.trim() || "";
 
 		for (const state of initialStates) {
-			// Ignora estado inicial que não reconhece a primeira palavra falada pelo usuário
-			if (!state.match(currentWord))
+			// Ignora estado inicial que não reconhece a primeira palavra da entrada
+			if (!state.match(currentWord, caseSensitive))
 				continue;
 
 			const matchObj = new Match(true, this._defaultVariables, this._defaultRestrictedVariablesIndexes);
@@ -360,13 +369,17 @@ export class Automata {
 
 		while (currentStates.length && input.length) {
 			const nextStates = [];
-			currentWord = input.shift() || "";
+			currentWord = input.shift()?.trim() || "";
+
+			// Ignora whitespace
+			if (currentWord.length === 0)
+				continue;
 
 			for (const { state, matchObj } of currentStates) {
 				const transitions = this._transitionTable.get(state.id) || [];
 				for (const t of transitions) {
-					// Ignora transição que não reconhece a palavra falada pelo usuário
-					if (!t.match(currentWord))
+					// Ignora transição que não reconhece a palavra da entrada
+					if (!t.match(currentWord, caseSensitive))
 						continue;
 
 					const transitionMatchObj = new Match(true, matchObj.variables, matchObj.restrictedVariablesIndexes);
@@ -392,10 +405,10 @@ export class Automata {
 			currentStates = nextStates;
 		}
 
-		// Após o processamento de todas as palavras faladas, apenas estados resultantes que são finais são válidos para o reconhecimento do comando
+		// Após o processamento de todas as palavras da entrada, apenas estados resultantes que são finais são válidos para o reconhecimento do comando
 		currentStates = currentStates.filter(c => c.state.isFinal);
 		if (!currentStates.length)
-			return new Match(false);
+			return !allMatches ? new Match(false) : [];
 
 		// É considerado o melhor reconhecimento aquele que menos usou palavras como valores de variáveis,
 		// ou seja, aqueles que reconheceram o máximo de termos opcionais aplicáveis
