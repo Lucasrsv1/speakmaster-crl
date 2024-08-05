@@ -423,7 +423,7 @@ export class Automata {
 	}
 
 	/**
-	 * Obtém a lista todos os comandos possíveis de serem reconhecidos por este autômato
+	 * Obtém a lista de todos os comandos possíveis de serem reconhecidos por este autômato
 	 */
 	public getAllPossibilities (): string[] {
 		let currentStates: Array<{ state: AutomataState, cmd: string }> = [];
@@ -478,7 +478,7 @@ export class Automata {
 
 	/**
 	 * Obtém a lista de restrições de uma dada variável restrita, sendo que cada item será uma
-	 * opção de valor reconhecido pela variável restrita definido usando o a linguagem CRL
+	 * opção de valor reconhecido pela variável restrita definida usando a linguagem CRL
 	 * @param variableName Nome da variável restrita
 	 * @returns Retorna a lista de opções, ou um vetor vazio caso a variável não seja restrita
 	 */

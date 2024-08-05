@@ -72,7 +72,7 @@ class Interpreter {
 
 		for (const state of states) {
 			if (this.debugging)
-				console.log("[Interpreter Log] Looking for inicial states, now processing:", state.id);
+				console.log("[Interpreter Log] Looking for initial states, now processing:", state.id);
 
 			switch (state.type) {
 				case AutomataStateType.LIST:
